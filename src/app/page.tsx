@@ -1,103 +1,108 @@
-import Image from "next/image";
+import { useEffect, useState } from "react";
+
+const CLOUDINARY_CLOUD_NAME = "dmkavnadn";
+const CLOUDINARY_API_URL = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+
+async function fetchTeamsAndPlayers() {
+  const res = await fetch("/api/cloudinary-folders");
+  if (!res.ok) return { teams: [], playersByTeam: {} };
+  return res.json();
+}
+
+function getSampleImages(team: string, player: string) {
+  // For demo, construct a few sample URLs
+  return Array.from(
+    { length: 8 },
+    (_, i) =>
+      `${CLOUDINARY_API_URL}/v1693440000/${team}/${player}/${player}_${(i + 2)
+        .toString()
+        .padStart(4, "0")}.png`
+  );
+}
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [teams, setTeams] = useState<string[]>([]);
+  const [playersByTeam, setPlayersByTeam] = useState<Record<string, string[]>>(
+    {}
+  );
+  const [selectedTeam, setSelectedTeam] = useState<string>("");
+  const [selectedPlayer, setSelectedPlayer] = useState<string>("");
+  const [images, setImages] = useState<string[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  useEffect(() => {
+    fetchTeamsAndPlayers().then(({ teams, playersByTeam }) => {
+      setTeams(teams);
+      setPlayersByTeam(playersByTeam);
+      if (teams.length > 0) {
+        setSelectedTeam(teams[0]);
+        setSelectedPlayer(playersByTeam[teams[0]][0]);
+      }
+      // Debug log
+      console.log("Teams:", teams);
+      console.log("PlayersByTeam:", playersByTeam);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (selectedTeam && selectedPlayer) {
+      setImages(getSampleImages(selectedTeam, selectedPlayer));
+    }
+    // Debug log
+    console.log("Selected team:", selectedTeam);
+    console.log("Players for selected team:", playersByTeam[selectedTeam]);
+  }, [selectedTeam, selectedPlayer, playersByTeam]);
+
+  return (
+    <div className="min-h-screen p-8">
+      <h1 className="text-2xl font-bold mb-4">
+        Cloudinary Sports Card Gallery
+      </h1>
+      <div className="mb-6 flex gap-4 flex-wrap">
+        <label>
+          Team:
+          <select
+            className="ml-2 p-1 border rounded"
+            value={selectedTeam}
+            onChange={(e) => {
+              setSelectedTeam(e.target.value);
+              setSelectedPlayer(playersByTeam[e.target.value][0]);
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            {teams.map((team) => (
+              <option key={team} value={team}>
+                {team}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Player:
+          <select
+            className="ml-2 p-1 border rounded"
+            value={selectedPlayer}
+            onChange={(e) => setSelectedPlayer(e.target.value)}
           >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+            {(playersByTeam[selectedTeam] || []).map((player) => (
+              <option key={player} value={player}>
+                {player}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {images.map((url, idx) => (
+          <img
+            key={url}
+            src={url}
+            alt={`${selectedPlayer} card ${idx + 2}`}
+            className="rounded shadow"
+            width={200}
+            height={280}
+            loading="lazy"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        ))}
+      </div>
     </div>
   );
 }
