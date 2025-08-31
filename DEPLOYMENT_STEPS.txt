@@ -1,0 +1,37 @@
+Steps to Deploy Your Next.js App with Docker and Docker Hub
+
+1. Create a Docker Hub account
+   - Go to https://hub.docker.com/ and sign up.
+
+2. Create a repository on Docker Hub
+   - After logging in, click "Create Repository".
+   - Name it (e.g., sportscardcollection).
+
+3. Log in to Docker Hub locally (optional for testing)
+   docker login
+   charlienichols0706
+   Lindsay6113
+   # Enter your Docker Hub username and password
+
+4. Build and tag your Docker image
+   docker build -t charlienichols0706/sportscardcollection:latest .
+
+5. Push your image to Docker Hub
+   docker push charlienichols0706/sportscardcollection:latest
+
+6. Set up GitHub Secrets for CI/CD
+   - In your GitHub repo, go to Settings > Secrets and variables > Actions.
+   - Add these secrets:
+     - DOCKERHUB_USERNAME
+     - DOCKERHUB_TOKEN (create a token at Docker Hub: Account Settings > Security > New Access Token)
+
+7. Update your GitHub Actions workflow
+   - Uncomment the Docker login and push steps in .github/workflows/deploy.yml.
+
+8. Deploy your container
+   # On your server or cloud host, run:
+   docker pull <your-dockerhub-username>/sportscardcollection:latest
+   docker run -d -p 80:3000 <your-dockerhub-username>/sportscardcollection:latest
+   # Point your domain to your server and set up SSL if needed.
+
+Let me know if you want help with any specific step or want to automate deployment to a cloud provider!
