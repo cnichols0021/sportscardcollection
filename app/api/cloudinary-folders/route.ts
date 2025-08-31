@@ -12,17 +12,21 @@ export async function GET() {
     // List all team folders under root
     const teamFolders = await cloudinary.v2.api.sub_folders("/");
     console.log("Team folders response:", JSON.stringify(teamFolders, null, 2));
-    const teams = teamFolders.folders.map((f: any) => f.name);
+    type CloudinaryFolder = { name: string };
+    type CloudinaryResource = { secure_url: string };
+    const teams = teamFolders.folders.map((f: CloudinaryFolder) => f.name);
     const playersByTeam: Record<string, string[]> = {};
     const imagesByPlayer: Record<string, Record<string, string[]>> = {};
     await Promise.all(
-      teams.map(async (team) => {
+      teams.map(async (team: string) => {
         try {
           const playerFolders = await cloudinary.v2.api.sub_folders(`${team}`);
-          playersByTeam[team] = playerFolders.folders.map((f: any) => f.name);
+          playersByTeam[team] = playerFolders.folders.map(
+            (f: CloudinaryFolder) => f.name
+          );
           imagesByPlayer[team] = {};
           await Promise.all(
-            playersByTeam[team].map(async (player) => {
+            playersByTeam[team].map(async (player: string) => {
               try {
                 // List images in this player's folder
                 const resources = await cloudinary.v2.api.resources({
@@ -31,22 +35,14 @@ export async function GET() {
                   max_results: 30,
                 });
                 imagesByPlayer[team][player] = resources.resources.map(
-                  (r: any) => r.secure_url
+                  (r: CloudinaryResource) => r.secure_url
                 );
-              } catch (imgErr: any) {
-                console.error(
-                  `Error fetching images for ${team}/${player}:`,
-                  imgErr.message
-                );
+              } catch {
                 imagesByPlayer[team][player] = [];
               }
             })
           );
-        } catch (playerErr: any) {
-          console.error(
-            `Error fetching player folders for team ${team}:`,
-            playerErr.message
-          );
+        } catch {
           playersByTeam[team] = [];
           imagesByPlayer[team] = {};
         }
@@ -58,8 +54,7 @@ export async function GET() {
       imagesByPlayer,
       debug: { teamFolders, playersByTeam, imagesByPlayer },
     });
-  } catch (err: any) {
-    console.error("API error:", err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "API error" }, { status: 500 });
   }
 }
