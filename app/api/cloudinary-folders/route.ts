@@ -54,7 +54,11 @@ export async function GET() {
       imagesByPlayer,
       debug: { teamFolders, playersByTeam, imagesByPlayer },
     });
-  } catch {
-    return NextResponse.json({ error: "API error" }, { status: 500 });
+  } catch (err) {
+    console.error("API error:", err);
+    return NextResponse.json(
+      { error: "API error", details: String(err) },
+      { status: 500 }
+    );
   }
 }
