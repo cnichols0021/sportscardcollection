@@ -26,11 +26,12 @@ jobs:
       - name: Build Docker image
         run: docker build -t sportscardcollection:latest .
 
-      # Optional: Push to Docker Hub (set up secrets DOCKERHUB_USERNAME and DOCKERHUB_TOKEN)
-      #- name: Log in to Docker Hub
-      #  run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-      #- name: Push Docker image
-      #  run: docker tag sportscardcollection:latest ${{ secrets.DOCKERHUB_USERNAME }}/sportscardcollection:latest
-      #  run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/sportscardcollection:latest
+      # Push to Docker Hub (set up secrets DOCKERHUB_USERNAME and DOCKERHUB_TOKEN)
+      - name: Log in to Docker Hub
+        run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+      - name: Push Docker image
+        run: |
+          docker tag sportscardcollection:latest charlienichols0706/sportscardcollection:latest
+          docker push charlienichols0706/sportscardcollection:latest
 
       # Add deployment steps here (e.g., SSH to server, deploy to cloud, etc.)
